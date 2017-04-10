@@ -1,0 +1,90 @@
+#!/bin/bash
+
+build() {
+	add_module fuse
+	
+	add_binary "mount"
+	add_binary "mount.cifs"
+	#add_binary "mount.curl"
+	add_binary "mount.fuse"
+	add_binary "mount.glusterfs"
+	add_binary "mount.ntfs"
+	add_binary "mount.ntfs-3g"
+	add_binary "mount.lowntfs-3g"
+	add_binary "mount.nfs"
+	add_binary "mount.nfs4"
+	add_binary "mountpoint"
+	#add_binary "mountstats"
+	add_binary "ls"
+	#add_binary "cd"
+	add_binary "cp"
+	add_binary "pwd"
+	#add_binary "while"
+	#add_binary "read"
+	add_binary "rsync"
+	add_binary "test"
+	add_binary "mkdir"
+	add_binary "rmdir"
+	add_binary "chown"
+	add_binary "echo"
+	add_binary "unison"
+	add_binary "mknod"
+	add_binary "sleep"
+	add_binary "find"
+	add_binary "cpio"
+	add_binary "systemctl"
+	add_binary "gluster"
+	add_binary "glusterd"
+	add_binary "glusterfs"
+	add_binary "glusterfsd"
+	add_binary "fusermount-glusterfs"
+	
+	# Exclude list for rsync.
+	add_file "/root/.rsync/exclude.txt"
+	
+	# Include all the files related to Gluster:
+	add_full_dir "/etc/glusterfs"
+	add_full_dir "/usr/include/glusterfs"
+	add_full_dir "/usr/lib/glusterfs"
+	
+	add_file "/usr/lib/libgfapi.so"
+	add_file "/usr/lib/libgfapi.so.0"
+	add_file "/usr/lib/libgfapi.so.0.0.0"
+	add_file "/usr/lib/libgfchangelog.so"
+	add_file "/usr/lib/libgfchangelog.so.0"
+	add_file "/usr/lib/libgfchangelog.so.0.0.0"
+	add_file "/usr/lib/libgfrpc.so"
+	add_file "/usr/lib/libgfrpc.so.0"
+	add_file "/usr/lib/libgfrpc.so.0.0.0"
+	add_file "/usr/lib/libgfxdr.so"
+	add_file "/usr/lib/libgfxdr.so.0"
+	add_file "/usr/lib/libgfxdr.so.0.0.0"
+	add_file "/usr/lib/libglusterfs.so"
+	add_file "/usr/lib/libglusterfs.so.0"
+	add_file "/usr/lib/libglusterfs.so.0.0.0"
+	
+	add_full_dir "/usr/lib/ocf/resource.d/glusterfs"
+	
+	add_file "/usr/lib/pkgconfig/glusterfs-api.pc"
+	add_file "/usr/lib/pkgconfig/libgfchangelog.pc"
+	
+	add_full_dir "/usr/lib/python2.7/site-packages/gluster"
+	
+	add_file "/usr/lib/systemd/system/glusterd.service"
+	
+	add_full_dir "/usr/share/glusterfs"
+	add_full_dir "/var/log/glusterfs"
+	add_full_dir "/var/run/gluster"
+	
+	add_full_dir "/var/lib/glusterd"
+	
+	add_runscript
+}
+
+help() {
+	cat <<HELPEOF
+This hook copies the root volume into a RAM disk and mounts it as the root itself.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

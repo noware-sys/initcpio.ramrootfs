@@ -1,0 +1,359 @@
+# vim: set ft=sh:
+run_hook() {
+	hook_name="ram"
+	indentation=""
+	
+	sleep_time=0
+	
+	
+	#mountpoint "/new_root"
+	
+	#ls /
+	#ls "/new_root"
+	
+	#echo "RAM{ram}:${ram}"
+	
+	#echo "Sleeping for ""${sleep_time}"" seconds"
+	#sleep "${sleep_time}" 
+	
+	#return
+	#exit
+	
+	#msg "Root FS:""${root_fs}"":Root FS"
+	#if [ "${ram}" = "1" -a -n "${root}" ]
+	if [ "${ram}" = "1" ]
+	then
+		#set
+		
+		echo "Sleeping for ""${sleep_time}"" seconds"
+		sleep "${sleep_time}"
+		
+		echo "{UNISON}::""${UNISON}""::"
+		echo "{HOME}::""${HOME}""::"
+		
+		echo "Sleeping for ""${sleep_time}"" seconds"
+		sleep "${sleep_time}"
+		
+		
+		local root_dev root_fs_type source_root source ramsize ramsizeunits ramfstype unison_cfg_d unison_cfg_d_temp
+		
+		# "${source_root}" is used by the kernel; the kernel mounts it as the actual root.
+		source_root="/new_root"
+		source="/root_source"
+		temporary="/root_ram"
+		unison_cfg_d="/etc/unison"
+		unison_cfg_d_temp="/etc/unison_temp"	# Could be removed.
+		
+		echo "YES"
+		
+		if [ -z "${rootfstype}" ]
+		then
+			root_fs_type="auto"
+		else
+			root_fs_type="${rootfstype}"
+		fi
+		
+		mkdir --parents "${source_root}"
+		
+		# If "${source_root}" is not a mountpoint.
+		mountpoint --quiet "${source_root}"
+		if [ "$?" != "0" ]
+		then
+			echo "RAM:{root}:""${root}"":{root}"
+			
+			if [ -z "${root}" ]
+			then
+				msg "${indentation}""${hook_name}"": Warning: The \"root\" parameter has not been detected to be set, and a root has not been made available. Trying to continue."
+			else
+				# Remove UUID= if it is present.
+				if test "${root%%=*}" = "UUID"
+				then
+					root_dev="/dev/disk/by-uuid/""${root#UUID=}"
+				else
+					root_dev="${root}"
+				fi
+				
+				#msg "${indentation}""${hook_name}"": Making the root available."
+				msg "${indentation}""${hook_name}"": Mounting the source root file system..."
+				mount --no-mtab --types "${root_fs_type}" --options "${rootflags}" "${root_dev}" "${source_root}"
+			fi
+		fi
+		
+		#if [ -z "${root}" ]
+		#then
+		#	msg "${indentation}""${hook_name}"": Warning: \"/new_root\" is not a mountpoint."
+		#fi
+		
+		if [ -z "${ramflags}" ]
+		then
+			ramflags="size=50%"
+		fi
+		
+		if [ -z "${ramfstype}" ]
+		then
+			ramfstype="tmpfs"
+		else
+			case "${ramfstype}" in
+				ramfs | tmpfs )
+					;;
+				* )
+					ramfstype="tmpfs"
+					msg "${indentation}""${hook_name}"": \"ramfstype\" ""${ramfstype}"" must be one of these: \"ramfs\", \"tmpfs\". Using a default of \""${ramfstype}"\" as the RAM file system type."
+			esac
+		fi
+		
+		#msg "Root FS: Creating any needed directories..."
+		mkdir --parents "${temporary}" "${source}"
+		
+		#echo "Sleeping for ""${sleep_time}"" seconds"
+		#sleep "${sleep_time}"
+		
+		msg "${indentation}""${hook_name}"": Moving the source root file system mountpoint..."
+		#mount --types "${rootfs_source_mount_types}" --options "${rootfs_source_mount_options}" "${rootfs_source}" "${rootfs_source_mount_location}"
+		#mount --options rbind "${source_root}" "${source}"
+		# mount --options bind,move "${source_root}" "${source}"
+		mount --options bind,move "${source_root}" "${source}"
+		
+		echo "Sleeping for ""${sleep_time}"" seconds"
+		sleep "${sleep_time}"
+		
+		msg "${indentation}""${hook_name}"": Mounting the RAM file system..."
+		mount --types "${ramfstype}" --options "${ramflags}" none "${temporary}"
+		
+		echo "Sleeping for ""${sleep_time}"" seconds"
+		sleep "${sleep_time}"
+		
+		#mknod -m 660 /dev/ram b 1 1
+		#chown root:root /dev/ram
+		
+		
+		msg "${indentation}""${hook_name}"": Copying the source root into RAM..."
+		case "${ram_transfer_tool}" in
+			cp )
+				#elements=$(ls --almost-all --literal --show-control-chars --quote-name --quoting-style=literal -1 "${source}")
+				# Ignoring paths:
+				#elements=$(ls --almost-all --literal --show-control-chars --quote-name --quoting-style=escape -1 --ignore=dev --ignore=proc --ignore=run --ignore=sys --ignore=tmp --ignore=swap.sys --ignore=media --ignore=mnt --ignore=misc --ignore=net --ignore=new[_-]root --ignore=old[_-]root --ignore="${source#/}" --ignore="${temporary#/}" "${source}")
+				elements=$(ls --almost-all --literal --show-control-chars --quote-name --quoting-style=escape -1 --ignore={dev,proc,run,sys,tmp,swap.sys,media,mnt,misc,net,{new,old}[_-]root,"${source#/}","${temporary#/}"} "${source}")
+			
+				echo "${elements}" | 
+				while read element
+				do
+					#echo "::>'""${source}""/""${element}""'<::"
+					#msg "${indentation}""${hook_name}"": Copying ""${source}""/""${element}"" to ""${temporary}""/""${element}"
+					cp --sparse=always --no-dereference --preserve=all --recursive --one-file-system --update --no-clobber --verbose --target-directory="${temporary}""/" """${source}""/""${element}"""
+				done
+				;;
+			find | cpio )
+				# find and cpio (and cd)
+				cd "${source}"
+					echo -n "PWD":
+					pwd
+					echo "Sleeping for ""${sleep_time}"" seconds"
+					sleep "${sleep_time}"
+				#find -P -O3 . -xdev -print0 | cpio --pass-through --null --dot --make-directories --unconditional --preserve-modification-time --sparse "${destination}"
+				# Ignoring paths:
+				find -P -O3 . -xdev -path "./dev" -prune -o -path "./proc" -prune -o -path "./run" -prune -o -path "./sys" -prune -o -path "./tmp" -prune -o -path "./swap.sys" -prune -o -path "./media" -prune -o -path "./mnt" -prune -o -path "./misc" -prune -o -path "./net" -prune -o -path "./var/log/journal" -prune -o -path ".""${source}" -prune -o -path ".""${temporary}" -prune -o -print0 | cpio --pass-through --null --dot --make-directories --unconditional --preserve-modification-time --sparse "${destination}"
+				cd /
+				;;
+			rsync )
+				rsync --archive --inplace --hard-links --acls --xattrs --devices --specials --one-file-system --8-bit-output --human-readable --progress --update --exclude-from="/root/.rsync/exclude.txt" "${source}/" "${temporary}"
+				;;
+			#unison )
+			* )
+				if [ "${ramdisk_cache_use}" != "0" ]
+				then
+					echo "{unison_cfg_d}::""${unison_cfg_d}""::"
+					
+					echo "dir::""${source}""${unison_cfg_d}""::"
+					echo "Sleeping for ""${sleep_time}"" seconds"
+					sleep "${sleep_time}"
+					
+					#if ! test -d "${source}""${unison_cfg_d}"
+					#then
+						echo "Making dir::""${source}""${unison_cfg_d}""::"
+						mkdir --parents "${source}""${unison_cfg_d}" "${unison_cfg_d}"
+						#mkdir --parents "${temporary}""${unison_cfg_d}"
+					#fi
+					
+					echo "dir::""${unison_cfg_d}""::"
+					echo "Sleeping for ""${sleep_time}"" seconds"
+					sleep "${sleep_time}"
+					
+					#if ! test -d "${unison_cfg_d}"
+					#then
+						echo "Making dir::""${unison_cfg_d}""::"
+						#mkdir --parents "${unison_cfg_d}"
+					#fi
+					
+					echo "Sync: meta-data: disk -> cpio"
+					echo "Sleeping for ""${sleep_time}"" seconds"
+					sleep "${sleep_time}"
+					
+					# Synchronize the meta data (from disk to initramfs):
+					# May improve data synchronization speed (from disk to RAM).
+					unison "${source}""${unison_cfg_d}" "${unison_cfg_d}" -times -backuploc local -xferbycopying -fastcheck true -batch -force "${source}""${unison_cfg_d}" -confirmbigdel=false -confirmmerge=false -log=false
+					
+					#echo "Sync: meta-data: cpio -> RAM"
+					#echo "Sleeping for ""${sleep_time}"" seconds"
+					#sleep "${sleep_time}"
+					
+					# Needed?
+					# Synchronize the meta data (from initramfs to RAM):
+					#unison "${temporary}""${unison_cfg_d}" "${unison_cfg_d}" -times -backuploc local -xferbycopying -fastcheck true -batch -force "${unison_cfg_d}" -confirmbigdel=false -confirmmerge=false -log=false
+				fi
+				
+				echo "::UNISON::"
+				echo "Sleeping for ""${sleep_time}"" seconds"
+				sleep "${sleep_time}"
+				
+				echo "{UNISON}::""${UNISON}""::Pre"
+				UNISON="${unison_cfg_d}"
+				
+				#echo "{UNISON}::""${UNISON}""::Inter"
+				
+				export UNISON
+				echo "{UNISON}::""${UNISON}""::Post"
+				
+				case "${ram_unison_fastcheck}" in
+					false | true | default | auto | yes | no )
+						;;
+					* )
+						# "-fastcheck true" quickens the initial update detection.
+						ram_unison_fastcheck="default"
+				esac
+				
+				echo "Sync: data: disk -> RAM"
+				echo "Sleeping for ""${sleep_time}"" seconds"
+				sleep "${sleep_time}"
+				
+				# Main synchronization of data (from disk to RAM):
+				#unison "${source}" "${temporary}" -times -backuploc local -xferbycopying -fastcheck "${ram_unison_fastcheck}" -batch -ignore "Path {dev,proc,run,sys,tmp,swap.sys,media,mnt,misc,net,{old,new}[_-]root,var/log/journal,""${source#/}"",""${temporary#/}"",""${unison_cfg_d_temp#/}""}" -force "${source}" -confirmbigdel=false -confirmmerge=false -log=false
+				unison "${source}" "${temporary}" -times -backuploc local -xferbycopying -fastcheck "${ram_unison_fastcheck}" -batch -ignore "Path {dev,proc,run,sys,tmp,swap.sys,media,mnt,misc,net,{old,new}[_-]root,var/log/journal,""${source#/}"",""${temporary#/}""}" -force "${source}" -confirmbigdel=false -confirmmerge=false -log=false
+				
+				if [ "${ramdisk_cache_update}" != "0" ]
+				then
+					mkdir --parents "${source}""${unison_cfg_d}" "${temporary}""${unison_cfg_d}"
+					echo "unsetting UNISON"
+					# Do not use the same meta data folder for this run, to prevent unison from not propagating changes which occur while it is running.
+					unset UNISON
+					
+					echo "{UNISON}::""${UNISON}""::Post Unset"
+					echo ""
+					#echo "Sync: meta-data: cpio -> disk"
+					#echo "Sleeping for ""${sleep_time}"" seconds"
+					#sleep "${sleep_time}"
+					#
+					## Synchronize the meta data (from initramfs to disk):
+					## Saves any changes of the meta data.
+					#unison "${source}""${unison_cfg_d}" "${unison_cfg_d}" -times -backuploc local -xferbycopying -fastcheck true -batch -force "${unison_cfg_d}" -confirmbigdel=false -confirmmerge=false -log=false
+					#
+					echo "Sync: meta-data: cpio -> RAM"
+					echo "Sleeping for ""${sleep_time}"" seconds"
+					sleep "${sleep_time}"
+					
+					# Synchronize the meta data (from initramfs to RAM):
+					# May improve data synchronization speed (from RAM to disk).
+					#unison "${temporary}""${unison_cfg_d}" "${source}""${unison_cfg_d}" -times -backuploc local -xferbycopying -fastcheck true -batch -force "${source}""${unison_cfg_d}" -confirmbigdel=false -confirmmerge=false -log=false
+					unison "${temporary}""${unison_cfg_d}" "${unison_cfg_d}" -times -backuploc local -xferbycopying -fastcheck true -batch -force "${unison_cfg_d}" -confirmbigdel=false -confirmmerge=false -log=false
+				fi
+				
+				echo "MAIN COMPLETE"
+				
+				#echo "Sleeping for ""${sleep_time}"" seconds"
+				#sleep "${sleep_time}"
+		esac
+		
+		echo "Sleeping for ""${sleep_time}"" seconds"
+		sleep "${sleep_time}"
+		
+		mkdir --parents "${temporary}""${source}" "${temporary}""${temporary}"
+		#mkdir --parents "${temporary}"{"${source}","${temporary}"}
+		
+		#echo "Sleeping for ""${sleep_time}"" seconds"
+		#sleep "${sleep_time}"
+		
+		#mount "${ramdisk_disk}" "${ramdisk_ram_mount_location}""${ramdisk_disk_mount_location}"
+		mount --options bind "${source}" "${temporary}""${source}"
+		mount --options bind "${temporary}" "${temporary}""${temporary}"
+		
+		echo "Sleeping for ""${sleep_time}"" seconds"
+		sleep "${sleep_time}"
+		
+		# umount "${ramdisk_disk_mount_location}"
+		
+		#echo "Sleeping for ""${sleep_time}"" seconds"
+		#sleep "${sleep_time}"
+		
+		#exec switch_root /mnt/ram /sbin/init
+		#switch_root "${ramdisk_ram_mount_location}" /sbin/init
+		
+		#mkdir -p "${ramdisk_ram_mount_location}"/mnt/{ram,disk}
+		#rmdir "${ramdisk_ram_mount_location}"
+		#umount "${ramdisk_disk_mount_location}"
+		#rmdir "${ramdisk_ram_mount_location}" "${ramdisk_disk_mount_location}"
+		
+		#mknod -m 660 /dev/ram b 1 1
+		#chown 0:0 /dev/ram
+		#chown root:root /dev/ram
+		
+		# Disable mounting all the pseudo filesystems possible.
+		#systemctl mask dev-hugepages.mount
+		
+		# Disable mounting the /tmp pseudo filesystem.
+		#systemctl mask tmp.mount
+		
+		# Unmount the /dev/shm pseudo filesystem.
+		#umount /dev/shm
+		
+		#echo "Sleeping for ""${sleep_time}"" seconds"
+		#sleep "${sleep_time}"
+		
+		if [ "${ramcleanup}" != "0" ]
+		then
+			# This prevents "df" (and probably others) from displaying an error, such as "\"${source_root}\": no such file or directory" at the beginning of the command's output.
+			# This happens because the \"${source_root}\" mountpoint remains in /etc/mtab after the real root bas been mounted, which exists only in (the scope of) the initramfs.
+			umount "${source_root}"
+		fi
+		
+		if [ "${ramcleanup_source}" = "1" ]
+		then
+			# Be independent from the source root.
+			umount "${source}"
+		fi
+		
+		mount_handler="ram_mount_handler"
+		
+		echo "RAM DISK DONE 1"
+	else
+		echo "NO"
+	fi
+	
+	echo "Sleeping for ""${sleep_time}"" seconds"
+	sleep "${sleep_time}" 
+}
+
+ram_mount_handler() {
+	echo "P1:""${1}"":P1"
+	
+	msg "${indentation}""${hook_name}"": Mounting the RAM file system as the future root..."
+	#mkdir --parents "${1}"
+	#mount -t "${ramdisk_ram_fs_type}" -o rbind "${ramdisk_ram_mount_location}" "${1}"
+	mount --no-mtab --options rbind "${temporary}" "${1}"
+	
+	# Disable mounting all the pseudo filesystems possible.
+	#systemctl mask dev-hugepages.mount
+	
+	# Disable mounting the /tmp pseudo filesystem.
+	#systemctl mask tmp.mount
+	
+	# Unmount the /dev/shm pseudo filesystem.
+	#umount /dev/shm
+	
+	#umount "/root_ram/root_source"
+	echo "Sleeping for ""${sleep_time}"" seconds"
+	sleep "${sleep_time}"
+	
+	echo "RAM DISK DONE 2"
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

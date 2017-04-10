@@ -1,0 +1,43 @@
+[Unit]
+Description=Root RAM FS
+#Requires=multi-user.target
+After=multi-user.target
+
+[Service]
+#Type=forking
+Type=oneshot
+#RemainAfterExit=no
+RemainAfterExit=yes
+#TimeoutSec=0
+#TimeoutStartSec=0
+TimeoutStopSec=0
+#SysVStartPriority=100
+# Allows synchronizing the RAM disk back to the non-volatile storage medium, by restarting regularly.
+#RestartSec=300
+
+EnvironmentFile=/etc/conf.d/ram.cfg
+
+# SystemD requires an "ExecStart" to be available:
+#ExecStart=/usr/bin/cp --sparse=always --no-dereference --preserve=all --recursive --one-file-system --update --force --target-directory=${ram}/ ${disk}/*
+#ExecStop=/usr/bin/cp --sparse=always --no-dereference --preserve=all --recursive --one-file-system --update --force --target-directory=${disk}/ ${ram}/*
+#ExecStart=/usr/bin/env HOME=/root
+#ExecStart=/usr/bin/echo "HOME=/root" > /tmp/unison.home.log
+#ExecStart=/usr/bin/unison "${ram}" "${disk}" -times -backuploc local -fastcheck false -batch -confirmbigdel=false -confirmmerge=false &> /tmp/unison.log
+# ExecStart="/root/Documents/RAMFS ROOT/mount-root-ramfs.sh"
+#ExecStart=/usr/bin/bash -c '/usr/bin/echo Testing >> /root/unison.test'
+#ExecStart=/usr/bin/echo Testing
+# ExecStart=/usr/bin/echo "Root RAM FS"
+ExecStart=-/usr/bin/umount /dev/shm
+#ExecStop=/usr/bin/env HOME=/root
+#ExecStop=HOME="/root"
+#ExecStop=/usr/bin/unison "${disk}" "${ram}" -times -backuploc local -fastcheck false -batch -ignore "Path {dev}" -ignore "Path {proc}" -ignore "Path {run}" -ignore "Path {sys}" -ignore "Path {tmp}" -ignore "Path {swap.sys}" -ignore "Path {media}" -ignore "Path {mnt}" -ignore "Path {misc}" -ignore "Path {net}" -ignore "Path {disk}" -ignore "Path {ram}" -ignore "Path {new_root}" -ignore "Path {new-root}" -ignore "Path {old_root}" -ignore "Path {old-root}" -force "${ram}" -confirmbigdel=false -confirmmerge=false -log=false
+#ExecStop=/usr/bin/env HOME=/root ; /usr/bin/unison "${disk}" "${ram}" -times -backuploc local -fastcheck false -batch -ignore "Path {dev}" -ignore "Path {proc}" -ignore "Path {run}" -ignore "Path {sys}" -ignore "Path {tmp}" -ignore "Path {swap.sys}" -ignore "Path {media}" -ignore "Path {mnt}" -ignore "Path {misc}" -ignore "Path {net}" -ignore "Path {disk}" -ignore "Path {ram}" -ignore "Path {new_root}" -ignore "Path {new-root}" -ignore "Path {old_root}" -ignore "Path {old-root}" -force "${ram}" -confirmbigdel=false -confirmmerge=false -log=false
+ExecStop=/root/Documents/rootfs/unmount-root-fs.sh 0
+#ExecStop=/usr/bin/bash /root/Documents/rootfs/unmount-root-fs.sh 0
+#ExecStop=/usr/bin/bash --noprofile --norc /root/Documents/rootfs/unmount-root-fs.sh 0
+ExecStop=/usr/bin/sleep "${time}"
+
+[Install]
+WantedBy=multi-user.target
+#WantedBy=graphical.target
+#Alias=dbus-org.bluez.service

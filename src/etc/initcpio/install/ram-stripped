@@ -1,0 +1,47 @@
+#!/bin/bash
+
+build() {
+	add_module fuse
+	
+	add_binary "mount"
+	add_binary "mount.cifs"
+	#add_binary "mount.curl"
+	add_binary "mount.fuse"
+	add_binary "mount.glusterfs"
+	add_binary "mount.ntfs"
+	add_binary "mount.ntfs-3g"
+	add_binary "mount.lowntfs-3g"
+	add_binary "mount.nfs"
+	add_binary "mount.nfs4"
+	add_binary "mountpoint"
+	#add_binary "mountstats"
+	add_binary "ls"
+	#add_binary "cd"
+	add_binary "cp"
+	add_binary "pwd"
+	add_binary "rsync"
+	add_binary "test"
+	add_binary "mkdir"
+	add_binary "rmdir"
+	add_binary "chown"
+	add_binary "echo"
+	add_binary "unison"
+	add_binary "mknod"
+	add_binary "sleep"
+	add_binary "find"
+	add_binary "cpio"
+	add_binary "systemctl"
+	
+	# Exclude list for rsync.
+	add_file "/root/.rsync/exclude.txt"
+	
+	add_runscript
+}
+
+help() {
+	cat <<HELPEOF
+This hook copies the root volume into a RAM disk and mounts it as the root itself.
+HELPEOF
+}
+
+# vim: set ft=sh ts=4 sw=4 et:

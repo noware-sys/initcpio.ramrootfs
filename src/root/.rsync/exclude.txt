@@ -1,0 +1,18 @@
+# Comments can be added like this.
+dev/
+proc/
+run/
+sys/
+tmp/
+swap.sys
+media/
+mnt/
+misc/
+net/
+new_root/
+new-root/
+old_root/
+old-root/
+var/log/journal/
+root_source/
+root_ram/
